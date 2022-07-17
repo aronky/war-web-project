@@ -1,47 +1,28 @@
 pipeline {
     agent any
-    tools {
-        maven 'Maven363'
-    }
-    options {
-        timeout(10)
-        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '5', numToKeepStr: '5')
-    }
+
     stages {
+        stage('Git clone') {
+            steps {
+               git branch: 'main', url: 'https://github.com/aronky/war-web-project.git'
+            }
+        }
+    
         stage('Build') {
             steps {
-                sh "mvn clean install"
+               sh 'mvn clean package'
             }
         }
-        stage('upload artifact to nexus') {
+        stage('Test') {
             steps {
-                nexusArtifactUploader artifacts: [
-                    [
-                        artifactId: 'wwp', 
-                        classifier: '', 
-                        file: 'target/wwp-1.0.0.war', 
-                        type: 'war'
-                    ]
-                ], 
-                    credentialsId: 'nexus3', 
-                    groupId: 'koddas.web.war', 
-                    nexusUrl: '10.0.0.91:8081', 
-                    nexusVersion: 'nexus3', 
-                    protocol: 'http', 
-                    repository: 'samplerepo', 
-                    version: '1.0.0'
+                sh 'mvn test'
             }
         }
-    }
-    post {
-        always{
-            deleteDir()
-        }
-        failure {
-            echo "sendmail -s mvn build failed receipients@my.com"
-        }
-        success {
-            echo "The job is successful"
+        
+        stage('Deploy to Tomcat') {
+            steps {
+                deploy adapters: [tomcat9(credentialsId: 'deployer_user', path: '', url: 'http://54.89.17.43/:8080/')], contextPath: 'path', war: '**/*.war'
+            }
         }
     }
 }
