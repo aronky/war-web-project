@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Git clone') {
             steps {
-               git branch: 'main', url: 'https://github.com/aronky/war-web-project.git'
+               git branch: 'master', url: 'https://github.com/aronky/war-web-project.git'
             }
         }
     
@@ -21,8 +21,7 @@ pipeline {
         
         stage('Deploy to Tomcat') {
             steps {
-                deploy adapters: [tomcat9(credentialsId: 'deployer_user', path: '', url: 'http://54.89.17.43/:8080/')], contextPath: 'path', war: '**/*.war'
-            }
+                deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://54.89.17.43:8080/')], contextPath: 'path', war: '**/*.war'         }
         }
     }
 }
